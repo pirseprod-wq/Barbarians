@@ -1,0 +1,32 @@
+{
+ "landscape_descs": 65,
+ "landscapes": 1,
+ "proxies_loaded": 65,
+ "location": [
+  -100800.0,
+  -100800.0,
+  100.0
+ ],
+ "scale": [
+  100.0,
+  100.0,
+  100.0
+ ],
+ "component_size_quads": "?",
+ "subsection_size_quads": "?",
+ "num_subsections": "?",
+ "bounds_x": [
+  -100800.0,
+  100800.0
+ ],
+ "bounds_y": [
+  -100800.0,
+  100800.0
+ ],
+ "verts": [
+  2017,
+  2017
+ ],
+ "edit_layers": "?",
+ "export_ok": true
+}
