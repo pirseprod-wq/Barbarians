@@ -228,8 +228,8 @@ def build_house(name, cx, cy, gz, yaw, L, W, H):
         except Exception:
             pass
     # дверь: смотрит на улицу (локальная сторона -Y)
-    spawn(CUBE, to_world(cx, cy, gz, yaw, 0, -(W / 2) * U - 5, 80),
-          unreal.Rotator(roll=0, pitch=0, yaw=yaw), (1.0, 0.12, 1.6), name + "_Door", folder)
+    spawn(CUBE, to_world(cx, cy, gz, yaw, 0, -(W / 2) * U - 5, 118),
+          unreal.Rotator(roll=0, pitch=0, yaw=yaw), (1.5, 0.12, 2.35), name + "_Door", folder)
 
 
 def build_fence(name, cx, cy, yaw, L, W):
@@ -284,9 +284,9 @@ def plan_houses(vx, vy):
     placed = []
     for kind in kinds:
         if kind == "Longhouse":
-            L, W, H = rnd.uniform(13, 15), 5.5, 2.0
+            L, W, H = rnd.uniform(13, 15), 5.5, 3.0
         else:
-            L, W, H = rnd.uniform(5.5, 7.5), rnd.uniform(4.0, 5.0), rnd.uniform(2.0, 2.4)
+            L, W, H = rnd.uniform(5.5, 7.5), rnd.uniform(4.0, 5.0), rnd.uniform(2.8, 3.2)
         radius = max(L, W) * U / 2
         for _ in range(500):
             x = rnd.uniform(-half, half)
@@ -351,7 +351,7 @@ def main():
     # освещение шаблона не грузится в игре: пересоздаём его и чиним режим игры
     import os
     here = os.path.dirname(os.path.abspath(__file__))
-    for extra in ("night_lighting.py", "fix_village_world.py", "weather_rain.py"):
+    for extra in ("night_lighting.py", "fix_village_world.py", "weather_rain.py", "ui_hud.py", "brand_house.py"):
         safe(extra, lambda f=extra: exec(open(os.path.join(here, f), encoding="utf-8").read(), {}))
     try:
         unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True, True)

@@ -126,6 +126,21 @@ def make_mi(path, name, parent, scalars=None, vectors=None):
 
 
 # ------------------------------------------------------------------ дождь
+def weather_mpc():
+    """MPC_Weather.RainAmount: 1 - дождь виден, 0 - в помещении (меняют двери)."""
+    path = MAT_DIR + "/MPC_Weather"
+    if eal.does_asset_exist(path):
+        return unreal.load_asset(path)
+    mpc = at.create_asset("MPC_Weather", MAT_DIR, unreal.MaterialParameterCollection,
+                          unreal.MaterialParameterCollectionFactoryNew())
+    p = unreal.CollectionScalarParameter()
+    p.set_editor_property("parameter_name", "RainAmount")
+    p.set_editor_property("default_value", 1.0)
+    mpc.set_editor_property("scalar_parameters", [p])
+    eal.save_loaded_asset(mpc)
+    return mpc
+
+
 def build_rain_material(tex):
     mat, g = new_material(MAT_DIR, "M_Rain")
     mat.set_editor_property("blend_mode", unreal.BlendMode.BLEND_TRANSLUCENT)
@@ -182,7 +197,34 @@ def build_rain_material(tex):
     g.c(ts, o1, "A", "R"); g.c(opacity, o1, "B")
     o2 = g.e(unreal.MaterialExpressionMultiply, 80, 450)
     g.c(o1, o2, "A"); g.c(side, o2, "B")
-    g.out(o2, unreal.MaterialProperty.MP_OPACITY)
+    # укрытие: если над точкой дождя есть крыша/навес/крона (глобальное поле расстояний), дождя нет
+    cover = None
+    for i, k in enumerate((80.0, 180.0, 300.0, 450.0, 650.0)):
+        off = g.e(unreal.MaterialExpressionConstant3Vector, -200, 820 + i * 120,
+                  constant=unreal.LinearColor(0, 0, k, 0))
+        pos = g.e(unreal.MaterialExpressionAdd, 0, 820 + i * 120)
+        g.c(wp, pos, "A"); g.c(off, pos, "B")
+        dist = g.e(unreal.MaterialExpressionDistanceToNearestSurface, 200, 820 + i * 120)
+        g.c(pos, dist, "Position")
+        if cover is None:
+            cover = dist
+        else:
+            mn = g.e(unreal.MaterialExpressionMin, 400, 820 + i * 120)
+            g.c(cover, mn, "A"); g.c(dist, mn, "B")
+            cover = mn
+    c1 = g.e(unreal.MaterialExpressionSubtract, 600, 900, const_b=40.0)
+    g.c(cover, c1, "A")
+    c2 = g.e(unreal.MaterialExpressionMultiply, 750, 900, const_b=1.0 / 60.0)
+    g.c(c1, c2, "A")
+    open_sky = g.e(unreal.MaterialExpressionSaturate, 900, 900)
+    g.c(c2, open_sky)
+    o3 = g.e(unreal.MaterialExpressionMultiply, 1050, 500)
+    g.c(o2, o3, "A"); g.c(open_sky, o3, "B")
+    amt = g.e(unreal.MaterialExpressionCollectionParameter, 1050, 700,
+              collection=weather_mpc(), parameter_name="RainAmount")
+    o4 = g.e(unreal.MaterialExpressionMultiply, 1200, 550)
+    g.c(o3, o4, "A"); g.c(amt, o4, "B")
+    g.out(o4, unreal.MaterialProperty.MP_OPACITY)
 
     col = g.vector("Color", (0.6, 0.7, 0.85), -300, 100)
     bright = g.scalar("Brightness", 0.15, -300, 220)
@@ -250,7 +292,8 @@ def apply_surfaces(mis, mud):
             continue
         if not isinstance(a, unreal.StaticMeshActor):
             continue
-        if not str(a.get_folder_path()).startswith("Village_Greybox"):
+        folder = str(a.get_folder_path())
+        if not folder.startswith("Village_Greybox") or folder.startswith("Village_Greybox/HeroHouse"):
             continue
         label = a.get_actor_label()
         if "_Roof" in label:
@@ -332,6 +375,8 @@ def build_player(near, far):
     unreal.BlueprintEditorLibrary.compile_blueprint(gm)
     cdo = unreal.get_default_object(gm.generated_class())
     cdo.set_editor_property("default_pawn_class", player.generated_class())
+    if eal.does_asset_exist(CORE_DIR + "/BP_GameHUD"):
+        cdo.set_editor_property("hud_class", unreal.load_asset(CORE_DIR + "/BP_GameHUD").generated_class())
     eal.save_loaded_asset(gm)
 
     ws = editor_sub.get_editor_world().get_world_settings()
