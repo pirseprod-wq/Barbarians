@@ -287,8 +287,9 @@ def apply_surfaces(mis, mud):
     n = 0
     for a in actor_sub.get_all_level_actors():
         if isinstance(a, unreal.Landscape):
-            a.modify()
-            a.set_editor_property("landscape_material", mud)
+            if not eal.does_asset_exist("/Game/_Game/Materials/Terrain/M_Landscape_Auto"):
+                a.modify()
+                a.set_editor_property("landscape_material", mud)
             continue
         if not isinstance(a, unreal.StaticMeshActor):
             continue

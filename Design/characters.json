@@ -1,0 +1,10 @@
+{
+  "_comment": "Персонажи: путь к модели со скелетом и рост в метрах. Новые модели из Tripo Bridge лежат в /Game/TripoModels/<Имя>/<Имя>.",
+  "characters": {
+    "Vardo":        {"mesh": "/Game/TripoModels/Vardo/Vardo",               "height_m": 1.80, "role": "игрок"},
+    "Ulf":          {"mesh": "/Game/TripoModels/Ulf/Ulf",                   "height_m": 1.78, "role": "друг"},
+    "Brund":        {"mesh": "/Game/TripoModels/Brund/Brund",               "height_m": 1.82, "role": "отец Ульфа (Бранд)"},
+    "Mother":       {"mesh": "/Game/TripoModels/Mother/Mother",             "height_m": 1.65, "role": "мать Ульфа"},
+    "Swirg_Shaman": {"mesh": "/Game/TripoModels/Swirg_Shaman/Swirg_Shaman", "height_m": 1.72, "role": "шаман свиргов"}
+  }
+}

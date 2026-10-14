@@ -172,17 +172,37 @@ def build_interior(m, embers):
     return fr, door_x, W, L, bench_y
 
 
+def character(name, fallback_mesh):
+    """модель персонажа из Tripo (если уже есть): меш, стойка, масштаб до нужного роста, исходная высота"""
+    try:
+        cfg = json.load(open(ROOT + "/Design/characters.json", encoding="utf-8"))["characters"][name]
+        built = json.load(open(ROOT + "/Saved/characters_built.json", encoding="utf-8")).get(name)
+    except Exception:
+        built = None
+    if built and eal.does_asset_exist(built["mesh"]):
+        mesh = unreal.load_asset(built["mesh"])
+        idle = [a for a in built["anims"] if "Idle" in a]
+        anim = unreal.load_asset(idle[0]) if idle else IDLE
+        h = mesh.get_bounds().box_extent.z * 2
+        return mesh, anim, cfg["height_m"] * 100.0 / h, h
+    return fallback_mesh, IDLE, 1.0, 180.0
+
+
 def build_family(fr, m, W, L, bench_y):
     top = 0.62
-    sleeper(fr, "Family_Father", MANNY, IDLE, -9.4, bench_y, top + 0.12, False, 1.0)
-    sleeper(fr, "Family_Mother", QUINN, IDLE, -8.1, bench_y, top + 0.12, False, 0.95)
+    for label, cname, fallback, x, extra in (("Family_Father", "Brund", MANNY, -9.4, 1.0),
+                                             ("Family_Mother", "Mother", QUINN, -8.1, 0.95)):
+        mesh, anim, sc, h = character(cname, fallback)
+        sleeper(fr, label, mesh, anim, x, bench_y, top + 0.12, False, sc * (extra if mesh in (MANNY, QUINN) else 1.0),
+                local_height=h)
     sleeper(fr, "Family_Child", QUINN, IDLE, -7.1, bench_y, top + 0.1, False, 0.68)
     for lab, x, w, ln in (("Father", -9.4, 0.8, 1.3), ("Mother", -8.1, 0.75, 1.25), ("Child", -7.1, 0.6, 0.9)):
         fr.box("Blanket_" + lab, x, bench_y - 0.25, top + 0.2, w, ln, 0.2, m["wool"])
-    ulf = sleeper(fr, "Ulf_Sleeping", MANNY, IDLE, -L / 2 + 0.8, -2.25, 0.66, False, 0.97, head_positive=False)
+    mesh, anim, sc, h = character("Ulf", MANNY)
+    ulf = sleeper(fr, "Ulf_Sleeping", mesh, anim, -L / 2 + 0.8, -2.25, 0.66, False, sc * (0.97 if mesh is MANNY else 1.0),
+                  head_positive=False, local_height=h)
     fr.box("Blanket_Ulf", -L / 2 + 0.8, -2.0, 0.72, 0.8, 1.45, 0.18, m["wool"])
-    for a in (ulf,):
-        always_loaded(a)
+    always_loaded(ulf)
     return ulf
 
 
@@ -340,11 +360,13 @@ def advance(g, hud):
 def build_friend_bp(d):
     bp = new_bp(CHAR, "BP_Friend", unreal.Actor)
     body = add_component(bp, unreal.SkeletalMeshComponent, "Body")
-    body.set_editor_property("skeletal_mesh_asset", MANNY)
+    u_mesh, u_anim, u_sc, _ = character("Ulf", MANNY)
+    body.set_editor_property("skeletal_mesh_asset", u_mesh)
     body.set_editor_property("relative_rotation", unreal.Rotator(0, 0, -90))
+    body.set_editor_property("relative_scale3d", unreal.Vector(u_sc, u_sc, u_sc))
     body.set_editor_property("animation_mode", unreal.AnimationMode.ANIMATION_SINGLE_NODE)
     ad = unreal.SingleAnimationPlayData()
-    ad.set_editor_property("anim_to_play", IDLE)
+    ad.set_editor_property("anim_to_play", u_anim)
     ad.set_editor_property("saved_looping", True)
     ad.set_editor_property("saved_playing", True)
     ad.set_editor_property("saved_play_rate", 1.0)

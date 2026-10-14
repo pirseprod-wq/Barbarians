@@ -128,7 +128,7 @@ def always_loaded(a):
         pass
 
 
-def sleeper(fr, label, mesh, anim, lx, ly, lz, along_x, scale, head_positive=True):
+def sleeper(fr, label, mesh, anim, lx, ly, lz, along_x, scale, head_positive=True, local_height=180.0):
     """Спящий: поза MM_Idle, уложенная лицом вверх. (lx,ly,lz) - середина тела."""
     a = actor_sub.spawn_actor_from_object(mesh, fr.w(lx, ly, lz), fr.rot())
     a.set_actor_label(label)
@@ -152,14 +152,14 @@ def sleeper(fr, label, mesh, anim, lx, ly, lz, along_x, scale, head_positive=Tru
             a.set_actor_rotation(r, False)
             t = a.get_actor_transform()
             o = t.transform_location(unreal.Vector(0, 0, 0))
-            body = t.transform_location(unreal.Vector(0, 0, 170)) - o
-            up = t.transform_location(unreal.Vector(0, 100, 0)).z - o.z
+            body = t.transform_location(unreal.Vector(0, 0, local_height * 0.94)) - o
+            up = t.transform_location(unreal.Vector(0, local_height * 0.55, 0)).z - o.z
             along = (body.x * want.x + body.y * want.y) / (body.length() * want.length() + 1e-6)
-            score = (abs(body.z) < 20, up > 50, round(abs(along), 2), (along > 0) == head_positive)
+            score = (abs(body.z) < 20, up > 30, round(abs(along), 2), (along > 0) == head_positive)
             if best is None or score > best[0]:
                 best = (score, r)
     a.set_actor_rotation(best[1], False)
-    mid = a.get_actor_transform().transform_location(unreal.Vector(0, 0, 90))
+    mid = a.get_actor_transform().transform_location(unreal.Vector(0, 0, local_height * 0.5))
     a.set_actor_location(a.get_actor_location() + (fr.w(lx, ly, lz) - mid), False, False)
     return a
 
